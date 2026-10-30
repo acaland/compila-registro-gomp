@@ -73,6 +73,11 @@ Codice e istruzioni: <a href="{REPO_URL}">{REPO_URL}</a></small></p>
   <li>Trascina questo pulsante nella barra:</li>
 </ol>
 {''.join(links)}
+<h2>Preparare le lezioni in Excel</h2>
+<p>Scarica il <a href="modello-registro.xlsx" download>modello Excel</a> (va bene anche Google Fogli):
+una riga per lezione con Data, Dalle, Alle, Aula, Descrizione e, se hai più insegnamenti, Insegnamento.
+Poi seleziona le celle dalla riga delle intestazioni all'ultima lezione, copia e incolla nel pannello.
+Le istruzioni sono anche nel foglio «Istruzioni» del file.</p>
 <h2>Uso</h2>
 <ol>
   <li>Entra nel registro come al solito, dal portale docenti.</li>

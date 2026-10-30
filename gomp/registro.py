@@ -271,18 +271,18 @@ def plan(client: GompClient, registro: Registro, now: datetime | None = None) ->
 
     actions: list[Action] = []
     for lez in sorted(registro.lezioni, key=lambda x: x.start):
+        existing = by_start.pop(lez.start, None)  # mentioned by the file, whatever happens below
         if not data_from <= lez.data <= data_to:
             actions.append(Action('blocked', lez, reason=f'outside academic year {period.get("Description")}'))
             continue
         if enabled_to and now > enabled_to + timedelta(days=1):
             actions.append(Action('blocked', lez, reason=f'register closed on {enabled_to.date()}'))
             continue
-        if _locked(lez.data, window.get('signatures')):
-            actions.append(Action('blocked', lez, reason='month already signed'))
+        if (existing and existing.get('SignatureUID')) or _locked(lez.data, window.get('signatures')):
+            actions.append(Action('blocked', lez, reason='period already signed off'))
             continue
 
         aula, code, tipo = registro.aula_of(lez), registro.insegnamento_of(lez), registro.tipo_of(lez)
-        existing = by_start.pop(lez.start, None)
         try:
             if existing is None:
                 if aula is None:

@@ -9,7 +9,7 @@
 (() => {
   'use strict';
 
-  const VERSION = '0.1.0';
+  const VERSION = '0.2.0';
   const API = '/Professors/ActivityReport/';
   const DRAFT_KEY = 'gompRegistro.draft';
 
@@ -147,6 +147,7 @@
           else if (n === 'orario') cols.orario = j;
           else if (n === 'aula') cols.aula = j;
           else if (/^(descrizione|argomenti|programma|descrizione e\/o programma)$/.test(n)) cols.descr = j;
+          else if (n === 'insegnamento') cols.ins = j;
         });
         return;
       }
@@ -159,7 +160,11 @@
         return;
       }
       const lesson = makeLesson(line, head[1], head[2], head[3], head[4], head[5], head[6], head[7], get('aula'), out.errors);
-      if (lesson) { lesson.descr = squash(get('descr')); out.lessons.push(lesson); }
+      if (lesson) {
+        lesson.descr = squash(get('descr'));
+        lesson.insegnamento = get('ins') || null;
+        out.lessons.push(lesson);
+      }
     });
   }
 
@@ -304,6 +309,8 @@
       const day = midnight(lesson.start);
       const action = { lesson, kind: 'unchanged', changes: [], item: null, reason: '' };
       actions.push(action);
+      const slot = existing.get(slotKey(lesson.start));
+      existing.delete(slotKey(lesson.start)); // whatever happens below, the text mentions it
       const period = periods.find((p) => p && midnight(parseWire(p.DateFrom)) <= day && day <= midnight(parseWire(p.DateTo)));
       const enabledTo = period && parseWire(period.EnabledTo);
       const enabledFrom = period && parseWire(period.EnabledFrom);
@@ -313,15 +320,17 @@
         action.reason = `A.A. ${period.Description} modificabile ${enabledFrom ? `dal ${itDate(enabledFrom)} ` : ''}al ${itDate(enabledTo)}`;
         continue;
       }
-      if (lockedBySignature(day, data.signatures)) { action.kind = 'blocked'; action.reason = 'mese già firmato'; continue; }
+      if (slot && slot.SignatureUID || lockedBySignature(day, data.signatures)) {
+        action.kind = 'blocked'; action.reason = 'periodo già rendicontato (firmato)'; continue;
+      }
 
       const aulaSpec = lesson.aula || d.aula;
-      const slot = existing.get(slotKey(lesson.start));
+      const insSpec = lesson.insegnamento || d.insegnamento;
       try {
         if (!slot) {
           if (!aulaSpec) throw new Error('manca l\'aula (riga "Aula:" in cima o dopo l\'orario)');
           const [type, space, activity] = await Promise.all([
-            resolver.type(d.tipo), resolver.space(aulaSpec), resolver.activity(d.insegnamento, day),
+            resolver.type(d.tipo), resolver.space(aulaSpec), resolver.activity(insSpec, day),
           ]);
           action.kind = 'create';
           action.changes.push(`${spaceLabel(space)} · [${activity.ActivityCode}] ${activity.ActivityName}`);
@@ -333,7 +342,6 @@
           };
           continue;
         }
-        existing.delete(slotKey(lesson.start));
         const item = { ...slot, DateFrom: lesson.start, DateTo: lesson.end };
         const oldEnd = parseWire(slot.DateTo);
         if (!oldEnd || oldEnd.getTime() !== lesson.end.getTime()) action.changes.push(`fine ${oldEnd ? hhmm(oldEnd) : '—'} → ${hhmm(lesson.end)}`);
@@ -348,8 +356,8 @@
             Object.assign(item, { Space: space, SpaceUID: space.UID, CustomSpace: null });
           }
         }
-        if (d.insegnamento) {
-          const activity = await resolver.activity(d.insegnamento, day);
+        if (insSpec) {
+          const activity = await resolver.activity(insSpec, day);
           if (!codes(slot).includes(activity.ActivityCode)) {
             action.changes.push(`insegnamento → ${activity.ActivityCode}`);
             Object.assign(item, { Details: [activity], CustomActivity: null });
@@ -456,7 +464,8 @@ Lezione I - Introduzione al corso: presentazione...
 Lezione II - Introduzione a SQL: ...</pre>
           Una lezione è identificata da data e ora di inizio: se nel registro esiste già viene aggiornata,
           altrimenti viene creata. Nulla viene mai cancellato. Puoi anche incollare celle da Excel
-          con colonne Data, Dalle, Alle, Aula, Descrizione.
+          con colonne Data, Dalle, Alle, Aula, Descrizione (e Insegnamento):
+          <a href="https://acaland.github.io/compila-registro-gomp/modello-registro.xlsx" target="_blank">scarica il modello</a>.
         </details>
         <div class="row">
           <select class="period"><option>Anno accademico…</option></select>

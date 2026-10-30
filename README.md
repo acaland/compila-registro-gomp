@@ -23,7 +23,7 @@ che funziona senza connessione a questo sito ma va reinstallata per aggiornarla.
 
 1. Entra nel registro come al solito, dal portale docenti.
 2. Clicca **Compila registro**: a destra si apre un pannello.
-3. Scrivi le lezioni, incollale da Excel o premi **Carica dal registro** per partire da quelle già presenti.
+3. Scrivi le lezioni, incollale dal [modello Excel](#modello-excel) o premi **Carica dal registro** per partire da quelle già presenti.
 4. **Controlla** mostra cosa verrà creato (+), aggiornato (~) o lasciato com'è (=), e segnala i problemi (!). Non salva nulla.
 5. **Pubblica** salva le lezioni senza problemi.
 
@@ -42,14 +42,32 @@ operatori logici. Esercizi guidati.
 - Per ogni lezione serve una riga con data, orario ed eventualmente l'aula, se diversa da quella in cima. Sotto va la descrizione, anche su più righe.
 - Le date si possono scrivere come `28/02/2026`, `28-02-26` o `Sab 28/02/2026`; gli orari come `10:00-13:00` o `15.30-18.30`.
 - Una lezione è identificata da **data e ora di inizio**: se nel registro esiste già viene aggiornata, altrimenti viene creata.
-- Se incolli da Excel, le colonne sono Data, Dalle, Alle, Aula, Descrizione, con la riga di intestazione.
+- Se incolli da Excel, servono la riga di intestazione e le colonne Data, Dalle, Alle, Aula, Descrizione, più Insegnamento se serve: vedi il [modello](#modello-excel).
 - Le lezioni nel registro che non compaiono nel testo restano come sono.
 - Le date fuori dal periodo modificabile e i mesi già firmati vengono segnalati.
+
+## Modello Excel
+
+Per chi preferisce preparare le lezioni in un foglio di calcolo c'è
+[**modello-registro.xlsx**](https://acaland.github.io/compila-registro-gomp/modello-registro.xlsx),
+che si può usare anche in Google Fogli.
+
+- Il foglio **Lezioni** ha già le colonne riconosciute dal segnalibro: **Data** (gg/mm/aaaa), **Dalle** e **Alle** (hh:mm), **Aula**, **Descrizione** e **Insegnamento**. Insegnamento è facoltativo e serve solo se ne hai più di uno.
+- Le celle sono già formattate e controllano date e orari.
+- Il foglio **Istruzioni** spiega i passaggi e contiene un esempio compilato.
+
+Per pubblicare:
+1. compila una riga per lezione; nella descrizione puoi andare a capo;
+2. seleziona le celle dalla riga delle intestazioni all'ultima lezione (colonne A–F) e copia;
+3. nel registro apri **Compila registro**, incolla nell'area di testo, poi **Controlla** e **Pubblica**.
+
+Le righe vuote copiate per errore vengono ignorate.
 
 ## Per sviluppatori
 
 - **`registro.js`**: il segnalibro, servito da GitHub Pages.
 - **`build.py`**: rigenera `index.html`, la pagina di installazione (`python build.py`).
+- **`modello.py`**: rigenera `modello-registro.xlsx` (`pip install openpyxl && python modello.py`).
 - **`gomp/`**: libreria e CLI Python sulle stesse API (lettura del registro in YAML, piano, pubblicazione), pensata anche per un futuro uso via MCP. Vedi [gomp/README.md](gomp/README.md).
 
 Le chiamate sono `POST` JSON su `/Professors/ActivityReport/{Init,GetData,FindActivities,FindSpaces,Save}`,
